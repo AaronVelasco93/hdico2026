@@ -138,3 +138,63 @@ Tambien puedes usar variables de entorno:
 - Extension `mysqli` habilitada
 - Sesiones habilitadas en PHP
 
+---
+[Usuario en navegador]
+        |
+        v
+ GET /src/index.php
+        |
+        v
+[index.php]
+ - carga helpers + Database + AlumnoRepository
+ - obtiene flash/form_state
+ - si ?edit=id -> busca alumno
+ - si ?action=export -> genera CSV
+ - consulta all() para tabla
+        |
+        v
+Render HTML (formulario + tabla)
+        |
+        | submit (POST)
+        v
+ POST /src/process.php
+        |
+        v
+[process.php]
+ - valida metodo POST
+ - valida CSRF
+ - detecta action: create/update/delete
+ - (create/update) valida datos con AlumnoValidator
+ - ejecuta CRUD con AlumnoRepository
+ - guarda flash + estado de formulario (si error)
+ - redirect a index.php
+        |
+        v
+ GET /src/index.php (de nuevo)
+        |
+        v
+[index.php]
+ - muestra mensaje flash
+ - muestra tabla actualizada
+
+
+Capas internas
+
+process.php / index.php
+        |
+        +--> helpers.php
+        |    - csrf, flash, escape, redirect, form_state
+        |
+        +--> Database.php
+        |    - crea conexion mysqli
+        |
+        +--> AlumnoRepository.php
+        |    - SQL CRUD (prepare/bind_param)
+        |
+        +--> AlumnoValidator.php
+             - reglas de validacion de campos
+Base de datos
+
+Files/DB/alumnos.sql
+ - crea BD registro_alumnos
+ - crea tabla registro
