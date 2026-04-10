@@ -1,0 +1,51 @@
+services:
+  db:
+    image: mysql:8.4
+    container_name: hdico_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root_secret
+      MYSQL_DATABASE: registro_alumnos
+      MYSQL_USER: app_user
+      MYSQL_PASSWORD: app_secret
+    ports:
+      - "3307:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uapp_user", "-papp_secret"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+    container_name: hdico_backend
+    restart: unless-stopped
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: registro_alumnos
+      DB_USER: app_user
+      DB_PASS: app_secret
+      FRONTEND_ORIGIN: http://localhost:8080
+    ports:
+      - "8000:80"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: hdico_frontend
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+
+volumes:
+  db_data:

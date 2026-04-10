@@ -1,0 +1,22 @@
+.message {
+    min-height: 20px;
+}
+
+.message.success {
+    color: #198754;
+}
+
+.message.error {
+    color: #dc3545;
+}
+
+.hidden {
+    display: none;
+}
+
+thead th {
+    position: sticky;
+    top: 0;
+    background-color: #343a40 !important;
+    z-index: 10;
+}
