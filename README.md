@@ -1,200 +1,170 @@
-# Registro de Alumnos (PHP + MySQLi)
+# HDICO 2026
+
+Aplicacion web para gestion de alumnos con autenticacion, CRUD y exportacion CSV, desplegada en una arquitectura de 3 contenedores con Docker.
 
 ## Descripcion general
-Este proyecto es una aplicacion web sencilla para administrar alumnos.
-Permite:
+
+La version actual del proyecto esta organizada en servicios independientes:
+
+- `frontend`: interfaz web en HTML, CSS y JavaScript
+- `backend`: API en PHP 8.3 + Apache
+- `db`: base de datos MySQL 8.4
+
+El sistema permite:
+
+- Iniciar sesion
+- Consultar alumnos registrados
 - Registrar alumnos
-- Listar alumnos
-- Editar alumnos
+- Modificar alumnos
 - Eliminar alumnos
-- Exportar alumnos a CSV
+- Exportar la informacion a CSV
 
-La app esta hecha en PHP con arquitectura simple por capas y conexion a MySQL usando `mysqli`.
+## Tecnologias utilizadas
 
-## Estructura del proyecto
-```text
-hdico2026/
-|-- src/
-|   |-- index.php
-|   |-- process.php
-|   |-- config/
-|   |   `-- database.php
-|   `-- src/
-|       |-- Database.php
-|       |-- AlumnoRepository.php
-|       |-- AlumnoValidator.php
-|       `-- helpers.php
-|-- Files/
-|   `-- DB/
-|       `-- alumnos.sql
-`-- README.md
-```
+- Docker
+- Docker Compose v2
+- PHP 8.3
+- Apache
+- MySQL 8.4
+- `mysqli`
+- Nginx 1.27 Alpine
+- HTML5
+- CSS3
+- JavaScript vanilla
 
-## Logica del programa
+## Arquitectura
 
-### 1) Carga principal (`src/index.php`)
-- Carga utilidades y clases necesarias (`helpers`, `Database`, `AlumnoRepository`).
-- Crea la conexion y el repositorio.
-- Si llega `?action=export`, genera y descarga el archivo CSV con todos los alumnos.
-- Recupera estado temporal del formulario (datos previos, errores y mensajes flash).
-- Si llega `?edit=<id>`, busca al alumno y precarga el formulario para actualizar.
-- Consulta todos los registros para mostrarlos en la tabla.
-- Renderiza:
-  - Formulario (alta o edicion, segun el contexto)
-  - Tabla de alumnos
-  - Boton de exportacion
-  - Mensajes de exito/error
+El proyecto corre con tres contenedores:
 
-### 2) Procesamiento de acciones (`src/process.php`)
-- Solo acepta peticiones `POST`.
-- Valida token CSRF.
-- Identifica accion enviada por formulario:
-  - `create`: crea alumno nuevo
-  - `update`: actualiza alumno existente
-  - `delete`: elimina alumno por id
-- Para `create` y `update`:
-  - Valida datos con `AlumnoValidator`.
-  - Si hay errores, guarda errores/datos en sesion y redirige al formulario.
-  - Si todo es valido, ejecuta operacion en `AlumnoRepository`.
-- Maneja excepciones:
-  - Detecta duplicados (error tipo `duplicate`)
-  - Muestra mensaje amigable al usuario
-- Redirige siempre a `index.php` para evitar reenvio del formulario.
-
-### 3) Capa de datos (`src/src/AlumnoRepository.php`)
-`AlumnoRepository` centraliza todo el acceso a tabla `registro`.
-
-Metodos principales:
-- `all()`: obtiene todos los alumnos ordenados por `id_alumno DESC`.
-- `findById($id)`: obtiene un alumno por id.
-- `create($alumno)`: inserta nuevo registro.
-- `update($id, $alumno)`: actualiza registro existente.
-- `delete($id)`: elimina registro.
-
-Todas las operaciones usan sentencias preparadas para mayor seguridad.
-
-### 4) Conexion a base de datos (`src/src/Database.php`)
-- Lee configuracion desde `src/config/database.php`.
-- Crea una sola instancia reutilizable de `mysqli`.
-- Configura charset `utf8mb4`.
-- Si falla la conexion, lanza excepcion controlada.
-
-### 5) Validacion (`src/src/AlumnoValidator.php`)
-Valida y normaliza entradas del formulario:
-- `primer_apellido`: obligatorio, max 255
-- `segundo_apellido`: opcional, max 255
-- `nombres`: obligatorio, max 255
-- `no_cuenta`: 8 a 9 digitos
-- `correo`: obligatorio, formato valido, max 255
-- `contacto`: exactamente 10 digitos
-
-Devuelve:
-- `data`: datos limpios
-- `errors`: errores por campo
-
-### 6) Helpers (`src/src/helpers.php`)
-Funciones utilitarias:
-- `e()`: escapa salida HTML
-- `redirect()`: redirige y termina ejecucion
-- `setFlash()` / `pullFlash()`: mensajes temporales en sesion
-- `csrfToken()` / `isValidCsrfToken()`: proteccion CSRF
-- `rememberForm()` / `pullFormState()`: conserva datos y errores entre redirecciones
-
-## Base de datos
-Archivo SQL: `Files/DB/alumnos.sql`
-
-Incluye:
-- Creacion de base `registro_alumnos`
-- Uso de la base
-- Recreacion de tabla `registro`
-- Campos necesarios para el CRUD
-
-## Configuracion rapida
-Editar `src/config/database.php` con tus credenciales:
-- `host`
-- `port`
-- `dbname`
-- `username`
-- `password`
-
-Tambien puedes usar variables de entorno:
-- `DB_HOST`
-- `DB_PORT`
-- `DB_NAME`
-- `DB_USER`
-- `DB_PASS`
-
-## Flujo resumido de una operacion
-1. Usuario envia formulario en `index.php`.
-2. `process.php` recibe POST y valida CSRF.
-3. `AlumnoValidator` valida datos.
-4. `AlumnoRepository` ejecuta operacion en MySQL.
-5. Se guarda mensaje flash.
-6. Redireccion a `index.php`.
-7. `index.php` muestra resultado y tabla actualizada.
+1. `db`
+   Base de datos MySQL con volumen persistente e inicializacion automatica mediante script SQL.
+2. `backend`
+   API PHP que maneja autenticacion, sesiones, validaciones, CRUD y exportacion CSV.
+3. `frontend`
+   Aplicacion web estatica que consume la API usando `fetch` y mantiene la sesion con `credentials: include`.
 
 ## Requisitos
-- XAMPP o entorno con PHP + MySQL
-- Extension `mysqli` habilitada
-- Sesiones habilitadas en PHP
 
----
-[Usuario en navegador]
-        |
-        v
- GET /src/index.php
-        |
-        v
-[index.php]
- - carga helpers + Database + AlumnoRepository
- - obtiene flash/form_state
- - si ?edit=id -> busca alumno
- - si ?action=export -> genera CSV
- - consulta all() para tabla
-        |
-        v
-Render HTML (formulario + tabla)
-        |
-        | submit (POST)
-        v
- POST /src/process.php
-        |
-        v
-[process.php]
- - valida metodo POST
- - valida CSRF
- - detecta action: create/update/delete
- - (create/update) valida datos con AlumnoValidator
- - ejecuta CRUD con AlumnoRepository
- - guarda flash + estado de formulario (si error)
- - redirect a index.php
-        |
-        v
- GET /src/index.php (de nuevo)
-        |
-        v
-[index.php]
- - muestra mensaje flash
- - muestra tabla actualizada
+- Docker Desktop activo
+- Docker Compose v2
 
+## Como levantar el proyecto
 
-Capas internas
+Desde la carpeta `src/` ejecuta:
 
-process.php / index.php
-        |
-        +--> helpers.php
-        |    - csrf, flash, escape, redirect, form_state
-        |
-        +--> Database.php
-        |    - crea conexion mysqli
-        |
-        +--> AlumnoRepository.php
-        |    - SQL CRUD (prepare/bind_param)
-        |
-        +--> AlumnoValidator.php
-             - reglas de validacion de campos
-Base de datos
+```bash
+docker compose up --build
+```
 
-Files/DB/alumnos.sql
- - crea BD registro_alumnos
- - crea tabla registro
+Para detenerlo:
+
+```bash
+docker compose down
+```
+
+Para reiniciar desde cero y eliminar el volumen de base de datos:
+
+```bash
+docker compose down -v
+docker compose up --build
+```
+
+## URLs del entorno
+
+- Frontend: `http://localhost:8080`
+- Backend API: `http://localhost:8000/api.php`
+- MySQL expuesto localmente: `localhost:3307`
+
+## Credenciales iniciales
+
+- Usuario: `admin`
+- Password: `Admin123*`
+
+Estas credenciales se crean automaticamente desde [src/db/init/01_schema.sql](/Users/huronmarron/Desktop/clases2026/hdico2026/src/db/init/01_schema.sql).
+
+## Funcionalidad implementada
+
+- Login por sesion
+- Verificacion de sesion activa
+- Logout
+- CRUD completo de alumnos
+- Validacion de datos en backend
+- Exportacion de alumnos a CSV
+- Mensajes de error y exito en frontend
+
+## Endpoints principales
+
+- `POST /api.php?action=login`
+- `POST /api.php?action=logout`
+- `GET /api.php?action=me`
+- `GET /api.php?action=alumnos`
+- `POST /api.php?action=alumnos_create`
+- `PUT /api.php?action=alumnos_update&id={id}`
+- `DELETE /api.php?action=alumnos_delete&id={id}`
+- `GET /api.php?action=export`
+
+## Estructura principal
+
+```text
+hdico2026/
+|-- README.md
+|-- Files/
+|   |-- DB/
+|   |   `-- alumnos.sql
+|   |-- descripcion_proyecto_tecnico.txt
+|   `-- descripcion_proyecto_usuario.txt
+`-- src/
+    |-- docker-compose.yml
+    |-- GUIA_RAPIDA.md
+    |-- README_CONTENEDOR.md
+    |-- db/
+    |   `-- init/
+    |       `-- 01_schema.sql
+    |-- backend/
+    |   |-- Dockerfile
+    |   |-- config/
+    |   |   `-- database.php
+    |   |-- public/
+    |   |   `-- api.php
+    |   `-- src/
+    |       |-- AlumnoRepository.php
+    |       |-- AlumnoValidator.php
+    |       |-- ApiException.php
+    |       |-- AuthRepository.php
+    |       |-- AuthService.php
+    |       |-- Database.php
+    |       `-- helpers.php
+    |-- frontend/
+    |   |-- Dockerfile
+    |   |-- app.js
+    |   |-- config.js
+    |   |-- index.html
+    |   |-- nginx.conf
+    |   `-- styles.css
+    `-- index.php
+```
+
+## Archivos clave
+
+- [src/docker-compose.yml](/Users/huronmarron/Desktop/clases2026/hdico2026/src/docker-compose.yml)
+- [src/backend/public/api.php](/Users/huronmarron/Desktop/clases2026/hdico2026/src/backend/public/api.php)
+- [src/backend/src/AuthService.php](/Users/huronmarron/Desktop/clases2026/hdico2026/src/backend/src/AuthService.php)
+- [src/backend/src/AlumnoRepository.php](/Users/huronmarron/Desktop/clases2026/hdico2026/src/backend/src/AlumnoRepository.php)
+- [src/frontend/index.html](/Users/huronmarron/Desktop/clases2026/hdico2026/src/frontend/index.html)
+- [src/frontend/app.js](/Users/huronmarron/Desktop/clases2026/hdico2026/src/frontend/app.js)
+
+## Flujo general de la aplicacion
+
+1. El usuario entra al frontend en `http://localhost:8080`.
+2. El frontend consulta la API para verificar si existe sesion activa.
+3. El usuario inicia sesion con sus credenciales.
+4. El backend valida el usuario contra MySQL y crea la sesion.
+5. El frontend permite crear, editar, eliminar y listar alumnos.
+6. Cuando se solicita, el backend genera la exportacion CSV.
+
+## Notas importantes
+
+- La exportacion CSV requiere sesion iniciada.
+- El backend usa CORS para permitir solicitudes desde `http://localhost:8080`.
+- La sesion se conserva con cookies.
+- En el repositorio tambien existe una version previa mas simple en PHP tradicional, pero la implementacion principal actual es la version con Docker ubicada en `src/`.

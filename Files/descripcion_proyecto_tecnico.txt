@@ -1,0 +1,110 @@
+HDICO 2026 - Descripcion tecnica del proyecto
+
+Resumen tecnico
+
+El proyecto implementa un sistema web de autenticacion y administracion de alumnos con arquitectura separada en tres contenedores: frontend, backend y base de datos. El frontend consume una API HTTP desarrollada en PHP, mientras que la persistencia se resuelve con MySQL.
+
+Arquitectura general
+
+- Frontend desacoplado servido por Nginx.
+- Backend API en PHP con Apache.
+- Base de datos MySQL en contenedor independiente.
+- Comunicacion entre frontend y backend mediante peticiones fetch.
+- Manejo de sesion por cookies.
+
+Tecnologias utilizadas
+
+- Docker Compose v2 para orquestacion del entorno.
+- Docker para contenedorizacion.
+- MySQL 8.4 como motor de base de datos.
+- PHP 8.3 con Apache como servidor del backend.
+- Extension mysqli para acceso a datos.
+- HTML5 para la estructura del frontend.
+- CSS3 para estilos de la interfaz.
+- JavaScript vanilla para la logica del cliente.
+- Nginx 1.27 Alpine para servir el frontend.
+
+Servicios definidos
+
+1. db
+- Imagen: mysql:8.4
+- Puerto publicado: 3307
+- Volumen persistente para datos
+- Script de inicializacion en src/db/init/01_schema.sql
+
+2. backend
+- Base: php:8.3-apache
+- Puerto publicado: 8000
+- Extension instalada: mysqli
+- Variables de entorno para conexion a base de datos y CORS
+
+3. frontend
+- Base: nginx:1.27-alpine
+- Puerto publicado: 8080
+- Expone una aplicacion estatica HTML/CSS/JS
+
+Capas del backend
+
+- API principal en src/backend/public/api.php
+- Capa de acceso a datos en src/backend/src/AlumnoRepository.php y src/backend/src/AuthRepository.php
+- Capa de validacion en src/backend/src/AlumnoValidator.php
+- Servicio de autenticacion en src/backend/src/AuthService.php
+- Conexion a base de datos en src/backend/src/Database.php
+- Helpers y respuesta HTTP en src/backend/src/helpers.php
+- Manejo de errores con src/backend/src/ApiException.php
+
+Funcionalidad tecnica implementada
+
+- Login con verificacion de credenciales usando password_hash y password_verify.
+- Persistencia de sesion en servidor PHP.
+- Endpoint para validar sesion activa.
+- Logout con destruccion de sesion y cookie.
+- CRUD completo de alumnos.
+- Exportacion de registros a CSV.
+- Validaciones de entrada en backend.
+- Respuestas JSON para operaciones de API.
+- CORS configurado para el frontend local.
+
+Endpoints principales
+
+- POST /api.php?action=login
+- POST /api.php?action=logout
+- GET /api.php?action=me
+- GET /api.php?action=alumnos
+- POST /api.php?action=alumnos_create
+- PUT /api.php?action=alumnos_update&id={id}
+- DELETE /api.php?action=alumnos_delete&id={id}
+- GET /api.php?action=export
+
+Base de datos
+
+La inicializacion crea al menos dos tablas principales:
+
+- users: almacena usuarios del sistema para autenticacion.
+- registro: almacena la informacion de los alumnos.
+
+La base de datos utiliza:
+
+- InnoDB
+- utf8mb4
+- Claves primarias autoincrementales
+- Restricciones UNIQUE en username, no_cuenta y correo
+
+Configuracion y despliegue
+
+El proyecto se levanta con:
+
+docker compose up --build
+
+URLs por defecto:
+
+- Frontend: http://localhost:8080
+- Backend API: http://localhost:8000/api.php
+- MySQL: localhost:3307
+
+Observaciones tecnicas
+
+- El frontend usa fetch con credentials: include para mantener la sesion.
+- El backend aplica validacion de metodo HTTP segun la accion solicitada.
+- La logica del proyecto sigue una separacion sencilla por responsabilidades.
+- Existe tambien una version previa mas simple del CRUD en PHP dentro de src/ con estructura tradicional, mientras que la implementacion contenedorizada vive en src/backend y src/frontend.

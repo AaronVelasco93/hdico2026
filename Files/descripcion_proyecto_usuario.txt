@@ -1,0 +1,43 @@
+HDICO 2026 - Descripcion del proyecto a nivel usuario
+
+Este proyecto es una aplicacion web para la gestion de alumnos. Su objetivo es permitir que un usuario autenticado pueda administrar un registro escolar de forma sencilla desde el navegador.
+
+Desde la perspectiva del usuario, el sistema permite:
+
+- Iniciar sesion con un usuario y contrasena.
+- Consultar la lista de alumnos registrados.
+- Registrar nuevos alumnos.
+- Modificar la informacion de un alumno existente.
+- Eliminar alumnos del sistema.
+- Exportar la informacion de alumnos a un archivo CSV.
+
+El flujo de uso es directo:
+
+1. El usuario entra a la aplicacion.
+2. Inicia sesion con sus credenciales.
+3. Accede al panel principal.
+4. Captura o consulta informacion de alumnos.
+5. Puede editar, eliminar o exportar los registros cuando lo necesite.
+
+El sistema esta pensado para apoyar tareas basicas de control escolar o practicas academicas relacionadas con el manejo de registros. La interfaz se consume desde un frontend web y las operaciones se ejecutan contra una base de datos centralizada.
+
+Datos que maneja cada alumno:
+
+- Primer apellido
+- Segundo apellido
+- Nombres
+- Numero de cuenta
+- Correo electronico
+- Telefono de contacto
+
+Beneficios para el usuario:
+
+- Centraliza el registro de alumnos en un solo lugar.
+- Reduce errores al capturar gracias a validaciones.
+- Facilita la consulta y actualizacion de informacion.
+- Permite extraer los datos en formato CSV para respaldo o analisis.
+
+Credenciales iniciales del sistema:
+
+- Usuario: admin
+- Password: Admin123*
